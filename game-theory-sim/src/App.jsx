@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Battle from "./game/battle/Battle.js"
 import PayoffMatrix from "./game/battle/PayoffMatrix.js"
 import Player from "./game/Player.js"
@@ -9,6 +9,7 @@ import Cooperate from "./game/strategies/Cooperate.js"
 import Random from "./game/strategies/Random.js"
 import Grudger from "./game/strategies/Grudger.js"
 import Pavlov from "./game/strategies/Pavlov.js"
+import Board from './game/board/Board.js'
 
 const strategiesMap = {
   Copycat,
@@ -19,12 +20,11 @@ const strategiesMap = {
   Pavlov
 }
 
-function App() {
+export default function App() {
 
-  const [playerAType, setPlayerAType] = useState("Copycat")
-  const [playerBType, setPlayerBType] = useState("Defector")
-  const [result, setResult] = useState(null)
-
+  const [board, setBoard] = useState(null);
+  const [playerType, setPlayerType] = useState("Copycat")
+  
   const runSimulation = () => {
 
     const matrix = new PayoffMatrix({
@@ -34,72 +34,93 @@ function App() {
       DD: [1,1]
     })
 
-    const StrategyA = strategiesMap[playerAType]
-    const StrategyB = strategiesMap[playerBType]
-
-    const playerA = new Player(new StrategyA())
-    const playerB = new Player(new StrategyB())
-
-    const battle = new Battle(5, matrix)
-
-    const result = battle.play(playerA, playerB)
-
-    setResult(result)
   }
 
-  return (
+  useEffect(() => {
+    const newBoard = new Board(8)
+
+    const Strategy = strategiesMap[playerType]
+    const player = new Player(new Strategy())
+
+    // coloca na célula (0,0)
+    newBoard.getCell(0, 0).setPlayer(player)
+
+    setBoard(newBoard)
+  }, [])
+
+  useEffect(() => {
+    if (board != null && playerType != null) {
+      const Strategy = strategiesMap[playerType]
+      const player = new Player(new Strategy())
+  
+      const newBoard = board.clone()
+      newBoard.setPlayerAt(0, 0, player)
+      setBoard(newBoard)
+    }
+  }, [playerType])
+
+  return(<div
+    style={{
+      flexDirection: 'column',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}
+  >
     <div>
-      <h1>Game Theory Simulation</h1>
+      <label>Escolha seu jogador: </label>
+      <select value={playerType} onChange={(e) => setPlayerType(e.target.value)}>
+        {Object.keys(strategiesMap).map(name => (
+          <option key={name} value={name}>{name}</option>
+        ))}
+      </select>
+    </div>
+    <button onClick={runSimulation}>
+      Rodar Simulação
+    </button>
 
-      <h2>Escolha os jogadores</h2>
+    {/* 🔥 TABULEIRO AGORA DENTRO DO RETURN */}
+    {board && (
+      <>
+        <h2>Tabuleiro</h2>
 
-      <div>
-        <label>Player A: </label>
-        <select value={playerAType} onChange={(e) => setPlayerAType(e.target.value)}>
-          {Object.keys(strategiesMap).map(name => (
-            <option key={name} value={name}>{name}</option>
-          ))}
-        </select>
-      </div>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${board.size}, 80px)`,
+          gap: "5px"
+        }}>
+          {board.grid.map((row, i) =>
+            row.map((cell, j) => {
+              const player = cell.getPlayer()
+              const isStart = (i === 0 && j === 0)
+              const name = player
+                ? (isStart ? `PLAYER (${player.strategy.name})` : player.strategy.name)
+                : "Empty"
 
-      <div>
-        <label>Player B: </label>
-        <select value={playerBType} onChange={(e) => setPlayerBType(e.target.value)}>
-          {Object.keys(strategiesMap).map(name => (
-            <option key={name} value={name}>{name}</option>
-          ))}
-        </select>
-      </div>
-
-      <br />
-
-      <button onClick={runSimulation}>
-        Rodar Simulação
-      </button>
-
-      {result && (
-        <>
-          <h2>Players</h2>
-          <p>A: {result.playerA}</p>
-          <p>B: {result.playerB}</p>
-
-          <h2>Resultado</h2>
-          <p>Score A: {result.scoreA}</p>
-          <p>Score B: {result.scoreB}</p>
-          <p>Vencedor: {result.winner}</p>
-
-          <h2>Rodadas</h2>
-          {result.rounds.map(r => (
-            <div key={r.round}>
-              Round {r.round}: 
-              A={r.moveA} | B={r.moveB} → 
-              +{r.pointsA} / +{r.pointsB}
-            </div>
-          ))}
-        </>
-      )}
+              return (
+                <div
+                  key={`${i}-${j}`}
+                  style={{
+                    border: "1px solid black",
+                    padding: "10px",
+                    textAlign: "center",
+                    fontSize: "12px",
+                    backgroundColor: isStart
+                      ? "#00ffcc"
+                      : (i === board.size - 1 && j === board.size - 1)
+                      ? "#aaaaff"
+                      : "#f0f0f0"
+                  }}
+                >
+                  <div>({i},{j})</div>
+                  <strong>{name}</strong>
+                </div>
+              )
+            })
+          )}
+        </div>
+      </>
+    )}
     </div>
   )
 }
-
-export default App

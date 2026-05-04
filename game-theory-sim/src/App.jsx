@@ -30,6 +30,13 @@ export default function App() {
   const [playerPos, setPlayerPos] = useState({ row: 0, col: 0 })
   const [lastBattle, setLastBattle] = useState(null)
   const [path, setPath] = useState(null)
+  const [history, setHistory] = useState([])
+
+  const loadHistory = async () => {
+    const res = await fetch("http://localhost:3001/battles")
+    const data = await res.json()
+    setHistory(data)
+  }
 
   const calculatePath = () => {
     if (!board) return
@@ -47,11 +54,10 @@ export default function App() {
     setPath(resultPath)
   }
   
-  const movePlayer = (row, col) => {
+  const movePlayer = async (row, col) => {
     if (!board) return
 
     const { row: currentRow, col: currentCol } = playerPos
-
     const neighbors = board.getNeighbors(currentRow, currentCol)
 
     const isNeighbor = neighbors.some(cell =>
@@ -68,29 +74,48 @@ export default function App() {
     const player = currentCell.getPlayer()
     const enemy = targetCell.getPlayer()
 
-    // 🔥 SE TEM INIMIGO → BATALHA
     if (enemy) {
       const battle = createBattle()
-
       const result = battle.play(player, enemy)
-      setLastBattle(result);
-      console.log("BATALHA:", result)
 
-      if (result.winner === "A" || result.winner === "EMPATE") {
-        // (venceu ou empatou) -> move
+      setLastBattle(result)
+
+      // 🔥 DEBUG
+      console.log("ENVIANDO PARA API:", result)
+
+      try {
+        const res = await fetch("http://localhost:3001/battles", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            playerA: result.playerA,
+            playerB: result.playerB,
+            scoreA: result.scoreA,
+            scoreB: result.scoreB,
+            winner: result.winner,
+            rounds: result.rounds
+          })
+        })
+
+        const data = await res.json()
+        console.log("SALVO NO BANCO:", data)
+
+      } catch (err) {
+        console.error("ERRO AO SALVAR:", err)
+      }
+
+      // 🔥 AGORA SIM: mover se venceu/empatou
+      if (result.winner === "A" || result.winner === "Draw") {
         currentCell.setPlayer(null)
         targetCell.setPlayer(player)
 
         setBoard(newBoard)
         setPlayerPos({ row, col })
-
-      } else {
-        // perdeu → não move
-        console.log("Você perdeu a ou empatou a batalha!")
       }
 
     } else {
-      // célula vazia → move normal
       currentCell.setPlayer(null)
       targetCell.setPlayer(player)
 
@@ -161,6 +186,27 @@ export default function App() {
           <option key={name} value={name}>{name}</option>
         ))}
       </select>
+      <select onChange={async (e) => {
+        const id = e.target.value
+
+        const res = await fetch(`http://localhost:3001/battles/${id}`)
+        const data = await res.json()
+
+        setLastBattle({
+          ...data,
+          rounds: JSON.parse(data.rounds)
+        })
+      }}>
+        <option>Selecione uma batalha</option>
+        {history.map(b => (
+          <option key={b.id} value={b.id}>
+            #{b.id} - {b.playerA} vs {b.playerB}
+          </option>
+        ))}
+      </select>
+        <button onClick={loadHistory}>
+          Carregar Histórico
+        </button>
     </div>
     <button onClick={calculatePath}>
       Calcular Caminho

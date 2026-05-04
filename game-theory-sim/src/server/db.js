@@ -1,4 +1,5 @@
-import Database from "better-sqlite3";
+import { PrismaClient } from "@prisma/client"
 
-export const db = new Database("database.sqlite");
+const prisma = new PrismaClient()
 
+export default prisma

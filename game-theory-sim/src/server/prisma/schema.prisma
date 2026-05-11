@@ -8,11 +8,16 @@ datasource db {
 }
 
 model Game {
-  id         Int      @id @default(autoincrement())
-  playerType String
-  playerPos  String
-  path       String
-  lastBattle String
-  board      String
-  createdAt  DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+
+  playerType   String
+
+  playerPos    String
+  board        String
+  path         String
+  battles      String
+
+  payoffMatrix String
+
+  createdAt    DateTime @default(now())
 }

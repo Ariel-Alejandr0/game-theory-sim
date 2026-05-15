@@ -33,7 +33,9 @@ export default function App() {
     const [battleHistory, setBattleHistory] = useState([]);
 
     const loadHistory = async () => {
-        const res = await fetch("http://localhost:3001/games");
+        const res = await fetch("http://localhost:3001/games", {
+            cache: "no-store",
+        });
 
         const data = await res.json();
 
@@ -41,7 +43,9 @@ export default function App() {
     };
     const loadGame = async (id) => {
         try {
-            const res = await fetch(`http://localhost:3001/games/${id}`);
+            const res = await fetch(`http://localhost:3001/games/${id}`, {
+                cache: "no-store",
+            });
 
             const game = await res.json();
 
@@ -77,12 +81,12 @@ export default function App() {
 
         const astar = new AStar(board, player, createBattle);
 
-        const resultPath = astar.find(playerPos, board.end);
+        const resultPath = astar.findSmart(playerPos, board.end);
 
         console.log("PATH:", resultPath);
 
         setPath(resultPath);
-        
+
         // HISTÓRICO DA ROTA
         const battles = [];
 
@@ -309,12 +313,13 @@ export default function App() {
                         loadGame(id);
                     }}
                 >
-                    {battleHistory.length > 0 &&
-                        history.map((game) => (
-                            <option key={game.id} value={game.id}>
-                                Game #{game.id} - {game.playerType}
-                            </option>
-                        ))}
+                    <option value="">Selecione um save</option>
+
+                    {history.map((game) => (
+                        <option key={game.id} value={game.id}>
+                            Game #{game.id} - {game.playerType}
+                        </option>
+                    ))}
                 </select>
                 <button onClick={loadHistory}>Carregar Histórico</button>
             </div>

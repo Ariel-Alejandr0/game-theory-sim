@@ -1,125 +1,241 @@
 // game/pathFinding/AStar.js
 
+import matchupCost from "./PreComputedMatrix";
+
 class Node {
-  constructor(row, col){
-    this.row = row
-    this.col = col
-    this.g = Infinity
-    this.h = 0
-    this.f = Infinity
-    this.parent = null
-  }
+    constructor(row, col) {
+        this.row = row;
+        this.col = col;
+        this.g = Infinity;
+        this.h = 0;
+        this.f = Infinity;
+        this.parent = null;
+    }
 }
 
 export default class AStar {
-
-  constructor(board, player, createBattle){
-    this.board = board
-    this.player = player
-    this.createBattle = createBattle
-  }
-
-  heuristic(a, b){
-    return Math.abs(a.row - b.row) + Math.abs(a.col - b.col)
-  }
-
-  getCost(enemy){
-    if (!enemy) return 1
-
-    const battle = this.createBattle()
-    const result = battle.play(this.player, enemy)
-
-    if (result.winner === "A") return 2
-    if (result.winner === "EMPATE") return 5
-
-    return Infinity
-  }
-
-  reconstructPath(node){
-    const path = []
-
-    let current = node
-    while (current) {
-      path.unshift({ row: current.row, col: current.col })
-      current = current.parent
+    constructor(board, player, createBattle) {
+        this.board = board;
+        this.player = player;
+        this.createBattle = createBattle;
     }
 
-    return path
-  }
+    heuristic(a, b) {
+        return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
+    }
 
-  find(start, end){
+    getCost(enemy) {
+        if (!enemy) return 1;
 
-    const open = []
-    const closed = []
-    const nodes = {}
+        const battle = this.createBattle();
+        const result = battle.play(this.player, enemy);
 
-    const key = (r, c) => `${r}-${c}`
+        if (result.winner === "A") return 2;
+        if (result.winner === "EMPATE") return 5;
 
-    const startNode = new Node(start.row, start.col)
-    startNode.g = 0
-    startNode.h = this.heuristic(start, end)
-    startNode.f = startNode.h
+        return Infinity;
+    }
 
-    // ✅ inicialização correta
-    let bestNode = startNode
+    reconstructPath(node) {
+        const path = [];
 
-    open.push(startNode)
-    nodes[key(start.row, start.col)] = startNode
-
-    while (open.length > 0) {
-
-        open.sort((a, b) => a.f - b.f)
-        const current = open.shift()
-
-        // ✅ atualiza melhor nó AQUI
-        if (current.h <= bestNode.h) {
-            bestNode = current
+        let current = node;
+        while (current) {
+            path.unshift({ row: current.row, col: current.col });
+            current = current.parent;
         }
 
-        // 🎯 chegou no destino
-        if (current.row === end.row && current.col === end.col) {
-            return this.reconstructPath(current)
-        }
+        return path;
+    }
 
-        closed.push(current)
+    findSmart(start, end) {
+        const open = [];
+        const closed = [];
+        const nodes = {};
 
-        const neighbors = this.board.getNeighbors(current.row, current.col)
+        const key = (r, c) => `${r}-${c}`;
 
-        for (const cell of neighbors) {
-            const { row, col } = cell
-            const k = key(row, col)
+        const startNode = new Node(start.row, start.col);
 
-            let neighbor = nodes[k]
+        startNode.g = 0;
+        startNode.h = this.heuristic(start, end);
+        startNode.f = startNode.h;
 
-            if (!neighbor) {
-                neighbor = new Node(row, col)
-                nodes[k] = neighbor
+        let bestNode = startNode;
+
+        open.push(startNode);
+
+        nodes[key(start.row, start.col)] = startNode;
+
+        while (open.length > 0) {
+            // nó mais promissor
+            open.sort((a, b) => a.f - b.f);
+
+            const current = open.shift();
+
+            // melhor aproximação encontrada
+            if (current.h <= bestNode.h) {
+                bestNode = current;
             }
 
-            if (closed.some(n => n.row === row && n.col === col)) continue
+            // chegou no objetivo
+            if (current.row === end.row && current.col === end.col) {
+                return this.reconstructPath(current);
+            }
 
-            const enemy = cell.getPlayer()
-            const cost = this.getCost(enemy)
+            closed.push(current);
 
-            // 🔥 bloqueia caminho impossível
-            if (cost === Infinity) continue
+            let neighbors = this.board.getNeighbors(current.row, current.col);
 
-            const tentativeG = current.g + cost
+            // ====================================
+            // 🔥 NOVO:
+            // ordena vizinhos antes das batalhas
+            // ====================================
 
-            if (tentativeG < neighbor.g) {
-                neighbor.parent = current
-                neighbor.g = tentativeG
-                neighbor.h = this.heuristic(neighbor, end)
-                neighbor.f = neighbor.g + neighbor.h
+            neighbors.sort((a, b) => {
+                const enemyA = a.getPlayer();
+                const enemyB = b.getPlayer();
 
-                if (!open.includes(neighbor)) {
-                    open.push(neighbor)
+                const myType = this.player.strategy.name;
+
+                const typeA = enemyA?.strategy?.name;
+
+                const typeB = enemyB?.strategy?.name;
+
+                const priorityA = matchupCost[myType]?.[typeA] ?? 999;
+
+                const priorityB = matchupCost[myType]?.[typeB] ?? 999;
+
+                return priorityA - priorityB;
+            });
+
+            // ====================================
+            // processamento normal
+            // ====================================
+
+            for (const cell of neighbors) {
+                const { row, col } = cell;
+
+                const k = key(row, col);
+
+                let neighbor = nodes[k];
+
+                if (!neighbor) {
+                    neighbor = new Node(row, col);
+
+                    nodes[k] = neighbor;
+                }
+
+                // ignora fechados
+                if (closed.some((n) => n.row === row && n.col === col)) {
+                    continue;
+                }
+
+                const enemy = cell.getPlayer();
+
+                // batalha REAL continua acontecendo
+                const cost = this.getCost(enemy);
+
+                // caminho impossível
+                if (cost === Infinity) {
+                    continue;
+                }
+
+                const tentativeG = current.g + cost;
+
+                // caminho melhor encontrado
+                if (tentativeG < neighbor.g) {
+                    neighbor.parent = current;
+
+                    neighbor.g = tentativeG;
+
+                    neighbor.h = this.heuristic(neighbor, end);
+
+                    neighbor.f = neighbor.g + neighbor.h;
+
+                    if (!open.includes(neighbor)) {
+                        open.push(neighbor);
+                    }
                 }
             }
         }
+
+        // melhor caminho parcial encontrado
+        return this.reconstructPath(bestNode);
     }
 
+    find(start, end) {
+        const open = [];
+        const closed = [];
+        const nodes = {};
+
+        const key = (r, c) => `${r}-${c}`;
+
+        const startNode = new Node(start.row, start.col);
+        startNode.g = 0;
+        startNode.h = this.heuristic(start, end);
+        startNode.f = startNode.h;
+
+        // ✅ inicialização correta
+        let bestNode = startNode;
+
+        open.push(startNode);
+        nodes[key(start.row, start.col)] = startNode;
+
+        while (open.length > 0) {
+            open.sort((a, b) => a.f - b.f);
+            const current = open.shift();
+
+            // ✅ atualiza melhor nó AQUI
+            if (current.h <= bestNode.h) {
+                bestNode = current;
+            }
+
+            // 🎯 chegou no destino
+            if (current.row === end.row && current.col === end.col) {
+                return this.reconstructPath(current);
+            }
+
+            closed.push(current);
+
+            const neighbors = this.board.getNeighbors(current.row, current.col);
+
+            for (const cell of neighbors) {
+                const { row, col } = cell;
+                const k = key(row, col);
+
+                let neighbor = nodes[k];
+
+                if (!neighbor) {
+                    neighbor = new Node(row, col);
+                    nodes[k] = neighbor;
+                }
+
+                if (closed.some((n) => n.row === row && n.col === col))
+                    continue;
+
+                const enemy = cell.getPlayer();
+                const cost = this.getCost(enemy);
+
+                // 🔥 bloqueia caminho impossível
+                if (cost === Infinity) continue;
+
+                const tentativeG = current.g + cost;
+
+                if (tentativeG < neighbor.g) {
+                    neighbor.parent = current;
+                    neighbor.g = tentativeG;
+                    neighbor.h = this.heuristic(neighbor, end);
+                    neighbor.f = neighbor.g + neighbor.h;
+
+                    if (!open.includes(neighbor)) {
+                        open.push(neighbor);
+                    }
+                }
+            }
+        }
+
         // 🔥 retorno parcial
-        return this.reconstructPath(bestNode)
+        return this.reconstructPath(bestNode);
     }
 }

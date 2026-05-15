@@ -8,6 +8,7 @@ import SaveSelector from "./components/SaveSelector.jsx";
 import strategiesMap from "./utils/strategiesMap.js";
 import createBattle from "./utils/createBattle.js";
 import useGame from "./hooks/useGame.js";
+import MapSelector from "./components/MapSelector.jsx";
 
 export default function App() {
     const {
@@ -23,6 +24,9 @@ export default function App() {
         playerType,
         setPlayerType,
         saveGame,
+        maps,
+        selectedMap,
+        handleSelectMap,
     } = useGame();
 
     // restante dos estados...
@@ -36,13 +40,13 @@ export default function App() {
             }}
         >
             <div
-              style={{
-                height: "100%",
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-start',
-                alignItems: 'center'
-              }}
+                style={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-start",
+                    alignItems: "center",
+                }}
             >
                 <Controls
                     playerType={playerType}
@@ -57,7 +61,11 @@ export default function App() {
                     loadHistory={loadHistory}
                     saveGame={saveGame}
                 />
-
+                <MapSelector 
+                    maps={maps}
+                    onSelectMap={handleSelectMap}
+                    selectedMap={selectedMap}
+                />
                 <BattleInfo battle={lastBattle} />
             </div>
 

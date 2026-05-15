@@ -6,6 +6,7 @@ import BoardModel from "../game/board/Board.js";
 import createBattle from "../utils/createBattle.js";
 import Player from "../game/Player.js";
 import strategiesMap from "../utils/strategiesMap.js";
+import { getAllMaps } from "../service/constantMapsSerivce.js";
 
 export default function useGame() {
     const [board, setBoard] = useState(null);
@@ -23,6 +24,8 @@ export default function useGame() {
 
     const [playerType, setPlayerType] = useState("Copycat");
     const [history, setHistory] = useState([]);
+    const [maps, setMaps] = useState([]);
+    const [selectedMap, setSelectedMap] = useState("");
     // =========================================
     // MOVE PLAYER
     // =========================================
@@ -176,7 +179,7 @@ export default function useGame() {
     };
 
     // =========================================
-    // LOAD GAME
+    // SAVE GAME
     // =========================================
 
     const saveGame = async () => {
@@ -286,8 +289,43 @@ export default function useGame() {
     };
 
     // =========================================
+    // SelectMap
+    // =========================================
+    const loadMaps = async () => {
+        const data = await getAllMaps();
+
+        setMaps(data);
+    };
+
+    const handleSelectMap = async (mapId) => {
+        setSelectedMap(mapId);
+
+        const map = maps.find((m) => m.id === Number(mapId));
+
+        if (!map) return;
+
+        const boardData = JSON.parse(map.board);
+
+        const restoredBoard = BoardModel.fromJSON(boardData);
+
+        setBoard(restoredBoard);
+
+        setPlayerPos({
+            row: 0,
+            col: 0,
+        });
+
+        setPath(null);
+        setBattleHistory([]);
+    };
+
+    // =========================================
     // EFFECTS
     // =========================================
+    useEffect(() => {
+        loadMaps();
+        loadHistory();
+    }, []);
 
     useEffect(() => {
         const newBoard = new BoardModel(8);
@@ -350,6 +388,9 @@ export default function useGame() {
         loadGame,
         history,
         loadHistory,
-        saveGame
+        saveGame,
+        maps,
+        selectedMap,
+        handleSelectMap,
     };
 }

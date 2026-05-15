@@ -115,6 +115,29 @@ app.get("/games/:id", async (req, res) => {
   }
 })
 
+// ======================================
+// GET ALL MAPS
+// ======================================
+
+app.get("/maps", async (req, res) => {
+    try {
+        const maps = await prisma.presetMap.findMany({
+            orderBy: {
+                difficulty: "asc",
+            },
+        });
+
+        res.json(maps);
+
+    } catch (err) {
+        console.error(err);
+
+        res.status(500).json({
+            error: "Erro ao buscar mapas",
+        });
+    }
+});
+
 app.listen(3001, () => {
   console.log("Servidor rodando em:")
   console.log("http://localhost:3001")

@@ -21,3 +21,16 @@ model Game {
 
   createdAt    DateTime @default(now())
 }
+
+model PresetMap {
+  id          Int      @id @default(autoincrement())
+
+  name        String
+  difficulty  Int
+
+  board       String
+
+  description String?
+
+  createdAt   DateTime @default(now())
+}

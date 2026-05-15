@@ -126,56 +126,83 @@ export default function useGame() {
     const calculatePath = () => {
         if (!board) return;
 
+        // =====================================
+        // jogador atual
+        // =====================================
+
         const player = board.getCell(playerPos.row, playerPos.col).getPlayer();
+
+        // =====================================
+        // instancia A*
+        // =====================================
 
         const astar = new AStar(board, player, createBattle);
 
-        const resultPath = astar.findSmart(playerPos, board.end);
+        // =====================================
+        // resultado do algoritmo
+        // =====================================
+
+        const result = astar.findCached(playerPos, board.end);
+
+        if (!result) {
+            console.error("Nenhum resultado retornado pelo A*");
+
+            return;
+        }
+
+        const {
+            path: resultPath = [],
+            testedBattles = [],
+            successfulBattles = [],
+        } = result;
+
+        // =====================================
+        // salva path
+        // =====================================
 
         setPath(resultPath);
 
-        const battles = [];
+        // =====================================
+        // 🔥 batalhas do caminho FINAL
+        // usa successfulBattles
+        // =====================================
 
-        for (const step of resultPath) {
-            const cell = board.getCell(step.row, step.col);
+        const uniqueBattles = new Map();
 
-            const enemy = cell.getPlayer();
+        for (const battle of successfulBattles) {
+            const key = `${battle.position.row}-${battle.position.col}`;
 
-            // ignora vazio
-
-            if (!enemy) continue;
-
-            // ignora posição inicial
-
-            if (step.row === playerPos.row && step.col === playerPos.col) {
-                continue;
-            }
-
-            const battle = createBattle();
-
-            const result = battle.play(player, enemy);
-
-            battles.push({
-                position: {
-                    row: step.row,
-                    col: step.col,
-                },
-
-                playerA: result.playerA,
-                playerB: result.playerB,
-
-                scoreA: result.scoreA,
-                scoreB: result.scoreB,
-
-                winner: result.winner,
-
-                rounds: result.rounds,
-            });
+            uniqueBattles.set(key, battle);
         }
 
-        setBattleHistory(battles);
+        const pathBattles = resultPath
+            .map((step) => {
+                const key = `${step.row}-${step.col}`;
+                return uniqueBattles.get(key);
+            })
+            .filter(Boolean);
 
-        console.log("BATTLES:", battles);
+        // =====================================
+        // salva histórico
+        // =====================================
+
+        setBattleHistory({
+            testedBattles,
+            successfulBattles,
+            pathBattles,
+        });
+
+        // =====================================
+        // debug
+        // =====================================
+
+        console.log("PATH:", resultPath);
+
+        console.log("TODAS AS BATALHAS TESTADAS:", testedBattles);
+
+        console.log("BATALHAS VITORIOSAS:", successfulBattles);
+
+        console.log("BATALHAS DO CAMINHO FINAL:", pathBattles);
     };
 
     // =========================================

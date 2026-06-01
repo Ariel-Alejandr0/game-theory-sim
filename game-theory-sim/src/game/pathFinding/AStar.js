@@ -1,7 +1,8 @@
 // game/pathFinding/AStar.js
 
-import matchupCost from "./PreComputedMatrix";
-import Node from "./Node";
+import matchupCost from "./PreComputedMatrix.js";
+import Node from "./Node.js";
+import MinHeap from "./MinHeap.js";
 export default class AStar {
     constructor(board, player, createBattle) {
         this.board = board;
@@ -39,107 +40,27 @@ export default class AStar {
     }
 
     // =========================================
-    // 🔥 batalha REAL + cache + histórico
-    // =========================================
-
-    evaluateBattle(cell) {
-        const { row, col } = cell;
-
-        const cacheKey = `${row}-${col}`;
-
-        // casa vazia
-        const enemy = cell.getPlayer();
-
-        if (!enemy) {
-            return {
-                allowed: true,
-                cost: 1,
-                result: null,
-            };
-        }
-
-        // =====================================
-        // cache
-        // =====================================
-
-        if (this.battleCache[cacheKey]) {
-            return this.battleCache[cacheKey];
-        }
-
-        // =====================================
-        // batalha REAL
-        // =====================================
-
-        const battle = this.createBattle();
-
-        const result = battle.play(this.player, enemy);
-
-        let battleData;
-
-        // derrota = bloqueado
-        if (result.winner === "B") {
-            battleData = {
-                allowed: false,
-                cost: Infinity,
-                result,
-            };
-        }
-
-        // vitória
-        else if (result.winner === "A") {
-            battleData = {
-                allowed: true,
-                cost: 2,
-                result,
-            };
-        }
-
-        // empate
-        else {
-            battleData = {
-                allowed: true,
-                cost: 5,
-                result,
-            };
-        }
-
-        // =====================================
-        // salva cache
-        // =====================================
-
-        this.battleCache[cacheKey] = battleData;
-
-        // =====================================
-        // salva histórico COMPLETO
-        // =====================================
-
-        this.testedBattles.push({
-            position: {
-                row,
-                col,
-            },
-
-            playerA: result.playerA,
-            playerB: result.playerB,
-
-            scoreA: result.scoreA,
-            scoreB: result.scoreB,
-
-            winner: result.winner,
-
-            rounds: result.rounds,
-        });
-
-        return battleData;
-    }
-
-    // =========================================
     // 🔥 A* inteligente
     // =========================================
 
     findCached(start, end) {
-        const open = [];
-        const closed = [];
+        const startTime = performance.now();
+        this.metrics = {
+            expandedNodes: 0,
+            cacheHits: 0,
+            cacheMisses: 0,
+
+            testedBattles: 0,
+            successfulBattles: 0,
+            failedBattles: 0,
+
+            pathLength: 0,
+            executionTime: 0,
+            reachedGoal: false,
+        };
+        const open = new MinHeap();
+        const openSet = new Set();
+        const closedSet = new Set();
         const nodes = {};
 
         const testedBattles = [];
@@ -162,24 +83,29 @@ export default class AStar {
 
         nodes[key(start.row, start.col)] = startNode;
 
-        while (open.length > 0) {
-            open.sort((a, b) => a.f - b.f);
+        while (!open.isEmpty()) {
+            this.metrics.expandedNodes++;
 
-            const current = open.shift();
+            const current = open.pop();
 
             if (current.h <= bestNode.h) {
                 bestNode = current;
             }
 
             if (current.row === end.row && current.col === end.col) {
+                const path = this.reconstructPath(current);
+                this.metrics.pathLength = path.length;
+                this.metrics.reachedGoal = true;
+                this.metrics.executionTime = performance.now() - startTime;
                 return {
-                    path: this.reconstructPath(current),
+                    path,
                     testedBattles,
                     successfulBattles,
+                    metrics: this.metrics,
                 };
             }
 
-            closed.push(current);
+            closedSet.add(key(current.row, current.col));
 
             let neighbors = this.board.getNeighbors(current.row, current.col);
 
@@ -211,7 +137,7 @@ export default class AStar {
                     nodes[k] = neighbor;
                 }
 
-                if (closed.some((n) => n.row === row && n.col === col)) {
+                if (closedSet.has(k)) {
                     continue;
                 }
 
@@ -233,8 +159,9 @@ export default class AStar {
 
                         neighbor.f = neighbor.g + neighbor.h;
 
-                        if (!open.includes(neighbor)) {
+                        if (!open.has(k)) {
                             open.push(neighbor);
+                            openSet.add(k);
                         }
                     }
 
@@ -258,12 +185,15 @@ export default class AStar {
                 // =================================
 
                 if (enemyType !== "Random" && battleCache[cacheKey]) {
+                    this.metrics.cacheHits++;
                     result = battleCache[cacheKey];
                 } else {
+                    this.metrics.cacheMisses++;
                     // 🔥 batalha REAL
                     const battle = this.createBattle();
 
                     result = battle.play(this.player, enemy);
+                    this.metrics.testedBattles++;
 
                     // salva cache
                     if (enemyType !== "Random") {
@@ -290,22 +220,27 @@ export default class AStar {
 
                 // perdeu
                 if (result.winner === "B") {
+                    this.metrics.failedBattles++;
                     continue;
+                } else {
+                    this.metrics.successfulBattles++;
                 }
 
-                successfulBattles.push({
-                    position: { row, col },
+                if (!(enemyType !== "Random" && battleCache[cacheKey])) {
+                    successfulBattles.push({
+                        position: { row, col },
 
-                    playerA: result.playerA,
-                    playerB: result.playerB,
+                        playerA: result.playerA,
+                        playerB: result.playerB,
 
-                    scoreA: result.scoreA,
-                    scoreB: result.scoreB,
+                        scoreA: result.scoreA,
+                        scoreB: result.scoreB,
 
-                    winner: result.winner,
+                        winner: result.winner,
 
-                    rounds: result.rounds,
-                });
+                        rounds: result.rounds,
+                    });
+                }
 
                 const cost = result.winner === "A" ? 2 : 5;
 
@@ -320,23 +255,41 @@ export default class AStar {
 
                     neighbor.f = neighbor.g + neighbor.h;
 
-                    if (!open.includes(neighbor)) {
+                    if (!openSet.has(neighbor)) {
                         open.push(neighbor);
                     }
                 }
             }
         }
-
+        const path = this.reconstructPath(bestNode);
+        this.metrics.pathLength = path.length;
+        this.metrics.reachedGoal = false;
+        this.metrics.executionTime = performance.now() - startTime;
         return {
-            path: this.reconstructPath(bestNode),
+            path,
             testedBattles,
             successfulBattles,
+            metrics: this.metrics,
         };
     }
 
     findBasic(start, end) {
+        const startTime = performance.now();
+        this.metrics = {
+            expandedNodes: 0,
+            cacheHits: 0,
+            cacheMisses: 0,
+
+            testedBattles: 0,
+            successfulBattles: 0,
+            failedBattles: 0,
+
+            pathLength: 0,
+            executionTime: 0,
+            reachedGoal: false,
+        };
         const open = [];
-        const closed = [];
+        const closedSet = new Set();
         const nodes = {};
 
         // 🔥 histórico completo
@@ -362,6 +315,7 @@ export default class AStar {
         nodes[key(start.row, start.col)] = startNode;
 
         while (open.length > 0) {
+            this.metrics.expandedNodes++;
             // =====================================
             // A* tradicional
             // sem inteligência de matchup
@@ -378,16 +332,19 @@ export default class AStar {
 
             // chegou ao objetivo
             if (current.row === end.row && current.col === end.col) {
+                const path = this.reconstructPath(current);
+                this.metrics.pathLength = path.length;
+                this.metrics.reachedGoal = true;
+                this.metrics.executionTime = performance.now() - startTime;
                 return {
-                    path: this.reconstructPath(current),
-
+                    path,
+                    metrics: this.metrics,
                     testedBattles,
-
                     successfulBattles,
                 };
             }
 
-            closed.push(current);
+            closedSet.add(key(current.row, current.col));
 
             // =====================================
             // vizinhos SEM sort inteligente
@@ -409,7 +366,7 @@ export default class AStar {
                 }
 
                 // ignora fechados
-                if (closed.some((n) => n.row === row && n.col === col)) {
+                if (closedSet.has(k)) {
                     continue;
                 }
 
@@ -446,6 +403,7 @@ export default class AStar {
                 const battle = this.createBattle();
 
                 const result = battle.play(this.player, enemy);
+                this.metrics.testedBattles++;
 
                 // salva TODAS
                 testedBattles.push({
@@ -467,7 +425,10 @@ export default class AStar {
 
                 // derrota = bloqueia
                 if (result.winner === "B") {
+                    this.metrics.failedBattles++;
                     continue;
+                } else {
+                    this.metrics.successfulBattles++;
                 }
 
                 // salva válidas
@@ -512,12 +473,14 @@ export default class AStar {
         // =====================================
         // melhor caminho parcial
         // =====================================
-
+        const path = this.reconstructPath(bestNode);
+        this.metrics.pathLength = path.length;
+        this.metrics.reachedGoal = false;
+        this.metrics.executionTime = performance.now() - startTime;
         return {
-            path: this.reconstructPath(bestNode),
-
+            path,
+            metrics: this.metrics,
             testedBattles,
-
             successfulBattles,
         };
     }

@@ -1,0 +1,475 @@
+{
+  "size": 8,
+  "start": {
+    "row": 0,
+    "col": 0
+  },
+  "end": {
+    "row": 7,
+    "col": 7
+  },
+  "grid": [
+    [
+      {
+        "row": 0,
+        "col": 0,
+        "player": null
+      },
+      {
+        "row": 0,
+        "col": 1,
+        "player": {
+          "strategy": "Grudger"
+        }
+      },
+      {
+        "row": 0,
+        "col": 2,
+        "player": {
+          "strategy": "Pavlov"
+        }
+      },
+      {
+        "row": 0,
+        "col": 3,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 0,
+        "col": 4,
+        "player": {
+          "strategy": "Defector"
+        }
+      },
+      {
+        "row": 0,
+        "col": 5,
+        "player": {
+          "strategy": "Pavlov"
+        }
+      },
+      {
+        "row": 0,
+        "col": 6,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      },
+      {
+        "row": 0,
+        "col": 7,
+        "player": {
+          "strategy": "Random"
+        }
+      }
+    ],
+    [
+      {
+        "row": 1,
+        "col": 0,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 1,
+        "col": 1,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      },
+      {
+        "row": 1,
+        "col": 2,
+        "player": {
+          "strategy": "Copycat"
+        }
+      },
+      {
+        "row": 1,
+        "col": 3,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      },
+      {
+        "row": 1,
+        "col": 4,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 1,
+        "col": 5,
+        "player": {
+          "strategy": "Defector"
+        }
+      },
+      {
+        "row": 1,
+        "col": 6,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 1,
+        "col": 7,
+        "player": {
+          "strategy": "Grudger"
+        }
+      }
+    ],
+    [
+      {
+        "row": 2,
+        "col": 0,
+        "player": {
+          "strategy": "Copycat"
+        }
+      },
+      {
+        "row": 2,
+        "col": 1,
+        "player": {
+          "strategy": "Grudger"
+        }
+      },
+      {
+        "row": 2,
+        "col": 2,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 2,
+        "col": 3,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      },
+      {
+        "row": 2,
+        "col": 4,
+        "player": {
+          "strategy": "Pavlov"
+        }
+      },
+      {
+        "row": 2,
+        "col": 5,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 2,
+        "col": 6,
+        "player": {
+          "strategy": "Pavlov"
+        }
+      },
+      {
+        "row": 2,
+        "col": 7,
+        "player": {
+          "strategy": "Pavlov"
+        }
+      }
+    ],
+    [
+      {
+        "row": 3,
+        "col": 0,
+        "player": {
+          "strategy": "Grudger"
+        }
+      },
+      {
+        "row": 3,
+        "col": 1,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      },
+      {
+        "row": 3,
+        "col": 2,
+        "player": {
+          "strategy": "Defector"
+        }
+      },
+      {
+        "row": 3,
+        "col": 3,
+        "player": {
+          "strategy": "Grudger"
+        }
+      },
+      {
+        "row": 3,
+        "col": 4,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 3,
+        "col": 5,
+        "player": {
+          "strategy": "Defector"
+        }
+      },
+      {
+        "row": 3,
+        "col": 6,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 3,
+        "col": 7,
+        "player": {
+          "strategy": "Defector"
+        }
+      }
+    ],
+    [
+      {
+        "row": 4,
+        "col": 0,
+        "player": {
+          "strategy": "Pavlov"
+        }
+      },
+      {
+        "row": 4,
+        "col": 1,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      },
+      {
+        "row": 4,
+        "col": 2,
+        "player": {
+          "strategy": "Grudger"
+        }
+      },
+      {
+        "row": 4,
+        "col": 3,
+        "player": {
+          "strategy": "Defector"
+        }
+      },
+      {
+        "row": 4,
+        "col": 4,
+        "player": {
+          "strategy": "Copycat"
+        }
+      },
+      {
+        "row": 4,
+        "col": 5,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 4,
+        "col": 6,
+        "player": {
+          "strategy": "Defector"
+        }
+      },
+      {
+        "row": 4,
+        "col": 7,
+        "player": {
+          "strategy": "Grudger"
+        }
+      }
+    ],
+    [
+      {
+        "row": 5,
+        "col": 0,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 5,
+        "col": 1,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      },
+      {
+        "row": 5,
+        "col": 2,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 5,
+        "col": 3,
+        "player": {
+          "strategy": "Defector"
+        }
+      },
+      {
+        "row": 5,
+        "col": 4,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 5,
+        "col": 5,
+        "player": {
+          "strategy": "Defector"
+        }
+      },
+      {
+        "row": 5,
+        "col": 6,
+        "player": {
+          "strategy": "Grudger"
+        }
+      },
+      {
+        "row": 5,
+        "col": 7,
+        "player": {
+          "strategy": "Grudger"
+        }
+      }
+    ],
+    [
+      {
+        "row": 6,
+        "col": 0,
+        "player": {
+          "strategy": "Copycat"
+        }
+      },
+      {
+        "row": 6,
+        "col": 1,
+        "player": {
+          "strategy": "Pavlov"
+        }
+      },
+      {
+        "row": 6,
+        "col": 2,
+        "player": {
+          "strategy": "Copycat"
+        }
+      },
+      {
+        "row": 6,
+        "col": 3,
+        "player": {
+          "strategy": "Defector"
+        }
+      },
+      {
+        "row": 6,
+        "col": 4,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 6,
+        "col": 5,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      },
+      {
+        "row": 6,
+        "col": 6,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      },
+      {
+        "row": 6,
+        "col": 7,
+        "player": {
+          "strategy": "Random"
+        }
+      }
+    ],
+    [
+      {
+        "row": 7,
+        "col": 0,
+        "player": {
+          "strategy": "Defector"
+        }
+      },
+      {
+        "row": 7,
+        "col": 1,
+        "player": {
+          "strategy": "Random"
+        }
+      },
+      {
+        "row": 7,
+        "col": 2,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      },
+      {
+        "row": 7,
+        "col": 3,
+        "player": {
+          "strategy": "Grudger"
+        }
+      },
+      {
+        "row": 7,
+        "col": 4,
+        "player": {
+          "strategy": "Copycat"
+        }
+      },
+      {
+        "row": 7,
+        "col": 5,
+        "player": {
+          "strategy": "Copycat"
+        }
+      },
+      {
+        "row": 7,
+        "col": 6,
+        "player": {
+          "strategy": "Copycat"
+        }
+      },
+      {
+        "row": 7,
+        "col": 7,
+        "player": {
+          "strategy": "Cooperate"
+        }
+      }
+    ]
+  ]
+}

@@ -1,10 +1,10 @@
 import fs from "fs";
 
-import Board from "../board/Board.js"
+import Board from "../board/Board.js";
 import Player from "../Player.js";
 import Battle from "../battle/Battle.js";
 
-import AStar from "../pathFinding/AStar.js"
+import AStar from "../pathFinding/AStar.js";
 
 import Cooperate from "../strategies/Cooperate.js";
 import Defector from "../strategies/Defector.js";
@@ -22,35 +22,14 @@ const strategyFactory = {
     Random: () => new Random(),
 };
 
-function loadBoard(filePath) {
-    const json = JSON.parse(
-        fs.readFileSync(filePath, "utf8")
-    );
-
-    return Board.deserialize(json);
-}
-
 export default class BenchmarkRunner {
-    static run({
-        mapFile,
-        playerStrategy,
-        algorithm,
-    }) {
-        const boardData = JSON.parse(
-            fs.readFileSync(mapFile, "utf8")
-        );
+    static async run({ mapFile, playerStrategy, algorithm }) {
+        const boardData = JSON.parse(fs.readFileSync(mapFile, "utf8"));
 
         const board = Board.fromJSON(boardData);
+        const player = new Player(strategyFactory[playerStrategy]());
 
-        const player = new Player(
-            strategyFactory[playerStrategy]()
-        );
-
-        const astar = new AStar(
-            board,
-            player,
-            () => new Battle()
-        );
+        const astar = new AStar(board, player, () => new Battle());
 
         const start = boardData.start;
         const end = boardData.end;
@@ -77,20 +56,15 @@ export default class BenchmarkRunner {
 
             pathLength: result.path.length,
 
-            testedBattles:
-                result.metrics.testedBattles,
+            testedBattles: result.metrics.testedBattles,
 
-            successfulBattles:
-                result.metrics.successfulBattles,
+            successfulBattles: result.metrics.successfulBattles,
 
-            expandedNodes:
-                result.metrics.expandedNodes,
+            expandedNodes: result.metrics.expandedNodes,
 
-            cacheHits:
-                result.metrics.cacheHits,
+            cacheHits: result.metrics.cacheHits,
 
-            cacheMisses:
-                result.metrics.cacheMisses,
+            cacheMisses: result.metrics.cacheMisses,
         };
     }
 }

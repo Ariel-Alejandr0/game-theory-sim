@@ -1,23 +1,18 @@
 export default class BenchmarkReport {
-    static generate(results) {
-        return {
-            totalRuns: results.length,
+    constructor(results) {
+        this.results = results;
+    }
+    averageExecutionTime() {
+        const total = this.results.reduce(
+            (sum, r) => sum + r.executionTimeMs,
+            0,
+        );
 
-            averageTime:
-                results.reduce(
-                    (sum, r) => sum + r.executionTimeMs,
-                    0
-                ) / results.length,
+        return total / this.results.length;
+    }
+    successRate() {
+        const successes = this.results.filter((r) => r.success).length;
 
-            averageExpandedNodes:
-                results.reduce(
-                    (sum, r) => sum + r.expandedNodes,
-                    0
-                ) / results.length,
-
-            successRate:
-                results.filter(r => r.success).length /
-                results.length,
-        };
+        return successes / this.results.length;
     }
 }

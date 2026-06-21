@@ -1,80 +1,52 @@
-import { useState, useEffect } from "react";
+import { Routes, Route, NavLink } from "react-router-dom";
+import GamePage from "./pages/Gamepage.jsx";
+import ReportsPage from "./pages/ReportsPage.jsx";
+import SessionDetailPage from "./pages/SessionDetailPage.jsx";
 
-import Board from "./components/Board.jsx";
-import Controls from "./components/Controls.jsx";
-import BattleInfo from "./components/BattleInfo.jsx";
-import SaveSelector from "./components/SaveSelector.jsx";
-
-import strategiesMap from "./utils/strategiesMap.js";
-import createBattle from "./utils/createBattle.js";
-import useGame from "./hooks/useGame.js";
-import MapSelector from "./components/MapSelector.jsx";
+const navLinkStyle = ({ isActive }) => ({
+    padding: "8px 16px",
+    textDecoration: "none",
+    color: isActive ? "#111" : "#666",
+    fontWeight: isActive ? 600 : 400,
+    borderBottom: isActive ? "2px solid #111" : "2px solid transparent",
+});
 
 export default function App() {
-    const {
-        board,
-        playerPos,
-        movePlayer,
-        calculatePath,
-        lastBattle,
-        loadGame,
-        path,
-        history,
-        loadHistory,
-        playerType,
-        setPlayerType,
-        saveGame,
-        maps,
-        selectedMap,
-        handleSelectMap,
-    } = useGame();
-
-    // restante dos estados...
-
     return (
         <div
             style={{
                 height: "100%",
                 width: "100%",
                 display: "flex",
+                flexDirection: "column",
             }}
         >
-            <div
+            <nav
                 style={{
-                    height: "100%",
                     display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-start",
-                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 16px",
+                    borderBottom: "1px solid #ddd",
                 }}
             >
-                <Controls
-                    playerType={playerType}
-                    setPlayerType={setPlayerType}
-                    strategies={Object.keys(strategiesMap)}
-                    calculatePath={calculatePath}
-                />
+                <NavLink to="/" style={navLinkStyle} end>
+                    Jogo
+                </NavLink>
+                <NavLink to="/reports" style={navLinkStyle}>
+                    Relatórios
+                </NavLink>
+            </nav>
 
-                <SaveSelector
-                    history={history}
-                    loadGame={loadGame}
-                    loadHistory={loadHistory}
-                    saveGame={saveGame}
-                />
-                <MapSelector 
-                    maps={maps}
-                    onSelectMap={handleSelectMap}
-                    selectedMap={selectedMap}
-                />
-                <BattleInfo battle={lastBattle} />
+            <div style={{ flex: 1, minHeight: 0 }}>
+                <Routes>
+                    <Route path="/" element={<GamePage />} />
+                    <Route path="/reports" element={<ReportsPage />} />
+                    <Route
+                        path="/reports/:id"
+                        element={<SessionDetailPage />}
+                    />
+                </Routes>
             </div>
-
-            <Board
-                board={board}
-                playerPos={playerPos}
-                path={path}
-                movePlayer={movePlayer}
-            />
         </div>
     );
 }

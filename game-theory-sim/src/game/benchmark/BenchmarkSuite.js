@@ -14,12 +14,13 @@ export default class BenchmarkSuite {
             for (const player of this.players) {
                 for (const algorithm of this.algorithms) {
                     for (let i = 0; i < this.repetitions; i++) {
-                        const result = BenchmarkRunner.run({
+
+                        const result = await BenchmarkRunner.run({
                             mapFile: map,
                             playerStrategy: player,
                             algorithm,
                         });
-
+                        console.log(result)
                         results.push(result);
                     }
                 }

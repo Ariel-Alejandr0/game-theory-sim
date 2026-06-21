@@ -9,28 +9,47 @@ datasource db {
 
 model Game {
   id           Int      @id @default(autoincrement())
-
   playerType   String
-
   playerPos    String
   board        String
   path         String
   battles      String
-
   payoffMatrix String
-
   createdAt    DateTime @default(now())
 }
 
 model PresetMap {
   id          Int      @id @default(autoincrement())
-
   name        String
   difficulty  Int
-
   board       String
-
   description String?
-
   createdAt   DateTime @default(now())
+}
+
+model BenchmarkSession {
+  id          Int      @id @default(autoincrement())
+  executedAt  DateTime @default(now())
+  repetitions Int
+  computer    String?
+  sourceFile  String?
+  notes       String?
+  runs        BenchmarkRun[]
+}
+
+model BenchmarkRun {
+  id                Int              @id @default(autoincrement())
+  sessionId         Int
+  session           BenchmarkSession @relation(fields: [sessionId], references: [id])
+  map               String
+  player            String
+  algorithm         String
+  success           Boolean
+  executionTimeMs   Float
+  pathLength        Int?
+  testedBattles     Int?
+  successfulBattles Int?
+  expandedNodes     Int?
+  cacheHits         Int?
+  cacheMisses       Int?
 }

@@ -1,17 +1,14 @@
 import express from "express"
 import cors from "cors"
-
 import prisma from "./db.js"
 
 const app = express()
-
 app.use(cors())
 app.use(express.json())
+
 app.use((req, res, next) => {
-
-    res.setHeader("Cache-Control", "no-store")
-
-    next()
+  res.setHeader("Cache-Control", "no-store")
+  next()
 })
 
 // =====================================
@@ -20,25 +17,17 @@ app.use((req, res, next) => {
 // =====================================
 app.post("/games", async (req, res) => {
   try {
-
     const game = await prisma.game.create({
       data: {
         playerType: req.body.playerType,
-
         playerPos: JSON.stringify(req.body.playerPos),
-
         board: JSON.stringify(req.body.board),
-
         path: JSON.stringify(req.body.path),
-
         battles: JSON.stringify(req.body.battles),
-
         payoffMatrix: JSON.stringify(req.body.payoffMatrix)
       }
     })
-
     res.json(game)
-
   } catch (err) {
     console.error(err)
     res.status(500).json({
@@ -53,18 +42,14 @@ app.post("/games", async (req, res) => {
 // =====================================
 app.get("/games", async (req, res) => {
   try {
-
     const games = await prisma.game.findMany({
       orderBy: {
         id: "desc"
       }
     })
-
     res.json(games)
-
   } catch (err) {
     console.error(err)
-
     res.status(500).json({
       error: "Erro ao buscar jogos"
     })
@@ -77,38 +62,27 @@ app.get("/games", async (req, res) => {
 // =====================================
 app.get("/games/:id", async (req, res) => {
   try {
-
     const id = Number(req.params.id)
-
     const game = await prisma.game.findUnique({
       where: {
         id
       }
     })
-
     if (!game) {
       return res.status(404).json({
         error: "Jogo não encontrado"
       })
     }
-
     res.json({
       ...game,
-
       playerPos: JSON.parse(game.playerPos),
-
       board: JSON.parse(game.board),
-
       path: JSON.parse(game.path),
-
       battles: JSON.parse(game.battles),
-
       payoffMatrix: JSON.parse(game.payoffMatrix)
     })
-
   } catch (err) {
     console.error(err)
-
     res.status(500).json({
       error: "Erro ao carregar jogo"
     })
@@ -118,25 +92,174 @@ app.get("/games/:id", async (req, res) => {
 // ======================================
 // GET ALL MAPS
 // ======================================
-
 app.get("/maps", async (req, res) => {
-    try {
-        const maps = await prisma.presetMap.findMany({
-            orderBy: {
-                difficulty: "asc",
-            },
-        });
-
-        res.json(maps);
-
-    } catch (err) {
-        console.error(err);
-
-        res.status(500).json({
-            error: "Erro ao buscar mapas",
-        });
-    }
+  try {
+    const maps = await prisma.presetMap.findMany({
+      orderBy: {
+        difficulty: "asc",
+      },
+    });
+    res.json(maps);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Erro ao buscar mapas",
+    });
+  }
 });
+
+// =====================================
+// POST /sessions
+// salva uma sessão de benchmark
+// =====================================
+app.post("/sessions", async (req, res) => {
+  try {
+    const session = await prisma.benchmarkSession.create({
+      data: {
+        repetitions: req.body.repetitions,
+        computer: req.body.computer,
+        sourceFile: req.body.sourceFile,
+        notes: req.body.notes
+      }
+    })
+    res.json(session)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({
+      error: "Erro ao salvar sessão de benchmark"
+    })
+  }
+})
+
+// =====================================
+// GET /sessions
+// lista sessões de benchmark
+// =====================================
+app.get("/sessions", async (req, res) => {
+  try {
+    const sessions = await prisma.benchmarkSession.findMany({
+      orderBy: {
+        id: "desc"
+      }
+    })
+    res.json(sessions)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({
+      error: "Erro ao buscar sessões de benchmark"
+    })
+  }
+})
+
+// =====================================
+// GET /sessions/:id
+// carrega sessão específica
+// =====================================
+app.get("/sessions/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    const session = await prisma.benchmarkSession.findUnique({
+      where: {
+        id
+      }
+    })
+    if (!session) {
+      return res.status(404).json({
+        error: "Sessão não encontrada"
+      })
+    }
+    res.json(session)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({
+      error: "Erro ao carregar sessão"
+    })
+  }
+})
+
+// =====================================
+// POST /runs
+// salva um run de benchmark
+// =====================================
+app.post("/runs", async (req, res) => {
+  try {
+    const run = await prisma.benchmarkRun.create({
+      data: {
+        sessionId: Number(req.body.sessionId),
+        map: req.body.map,
+        player: req.body.player,
+        algorithm: req.body.algorithm,
+        success: req.body.success,
+        executionTimeMs: req.body.executionTimeMs,
+        pathLength: req.body.pathLength,
+        testedBattles: req.body.testedBattles,
+        successfulBattles: req.body.successfulBattles,
+        expandedNodes: req.body.expandedNodes,
+        cacheHits: req.body.cacheHits,
+        cacheMisses: req.body.cacheMisses
+      }
+    })
+    res.json(run)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({
+      error: "Erro ao salvar run de benchmark"
+    })
+  }
+})
+
+// =====================================
+// POST /runs/bulk
+// salva vários runs de benchmark de uma vez (uma única transação)
+// =====================================
+app.post("/runs/bulk", async (req, res) => {
+  try {
+    const { sessionId, runs } = req.body
+    const result = await prisma.benchmarkRun.createMany({
+      data: runs.map((run) => ({
+        sessionId: Number(sessionId),
+        map: run.map,
+        player: run.player,
+        algorithm: run.algorithm,
+        success: run.success,
+        executionTimeMs: run.executionTimeMs,
+        pathLength: run.pathLength,
+        testedBattles: run.testedBattles,
+        successfulBattles: run.successfulBattles,
+        expandedNodes: run.expandedNodes,
+        cacheHits: run.cacheHits,
+        cacheMisses: run.cacheMisses
+      }))
+    })
+    res.json(result)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({
+      error: "Erro ao salvar runs de benchmark em lote"
+    })
+  }
+})
+
+// =====================================
+// GET /runs?sessionId=
+// lista runs de uma sessão de benchmark
+// =====================================
+app.get("/runs", async (req, res) => {
+  try {
+    const sessionId = Number(req.query.sessionId)
+    const runs = await prisma.benchmarkRun.findMany({
+      where: {
+        sessionId
+      }
+    })
+    res.json(runs)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({
+      error: "Erro ao buscar runs de benchmark"
+    })
+  }
+})
 
 app.listen(3001, () => {
   console.log("Servidor rodando em:")

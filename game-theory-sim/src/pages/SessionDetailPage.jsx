@@ -17,8 +17,23 @@ const ALGORITHM_COLORS = {
   cached: "#2563eb",
 };
 
+const cellStyle = { padding: "8px 12px" };
+const totalRowStyle = {
+  borderTop: "2px solid #999",
+  fontWeight: 600,
+  backgroundColor: "#f9fafb",
+};
+
 function mapLabel(map) {
   return map.replace("./", "").replace(".txt", "");
+}
+
+function stdDev(values) {
+  const n = values.length;
+  if (n < 2) return 0;
+  const mean = values.reduce((a, b) => a + b, 0) / n;
+  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / n;
+  return Math.sqrt(variance);
 }
 
 function summarizeByGroup(runs) {
@@ -31,43 +46,60 @@ function summarizeByGroup(runs) {
         map: run.map,
         player: run.player,
         algorithm: run.algorithm,
-        count: 0,
-        totalTime: 0,
+        times: [],
         totalCacheHits: 0,
         totalCacheMisses: 0,
         successCount: 0,
       });
     }
-    const group = groups.get(key);
-    group.count += 1;
-    group.totalTime += run.executionTimeMs;
-    group.totalCacheHits += run.cacheHits ?? 0;
-    group.totalCacheMisses += run.cacheMisses ?? 0;
-    group.successCount += run.success ? 1 : 0;
+    const g = groups.get(key);
+    g.times.push(run.executionTimeMs);
+    g.totalCacheHits += run.cacheHits ?? 0;
+    g.totalCacheMisses += run.cacheMisses ?? 0;
+    g.successCount += run.success ? 1 : 0;
   }
 
-  return [...groups.values()].map((g) => ({
-    ...g,
-    avgTime: g.totalTime / g.count,
-    avgCacheHits: g.totalCacheHits / g.count,
-    avgCacheMisses: g.totalCacheMisses / g.count,
-  }));
+  return [...groups.values()].map((g) => {
+    const count = g.times.length;
+    const avgTime = g.times.reduce((a, b) => a + b, 0) / count;
+    return {
+      map: g.map,
+      player: g.player,
+      algorithm: g.algorithm,
+      count,
+      avgTime,
+      stdDevTime: stdDev(g.times),
+      avgCacheHits: g.totalCacheHits / count,
+      avgCacheMisses: g.totalCacheMisses / count,
+      successCount: g.successCount,
+    };
+  });
 }
 
-// Pivota os runs para { map, basic: tempoMedio, cached: tempoMedio },
-// formato que o recharts usa para desenhar barras lado a lado por mapa.
+// Média geral de todas as linhas do summary (ponderada pelo nº de execuções)
+function computeOverall(summary) {
+  if (!summary.length) return null;
+  const totalRuns = summary.reduce((s, r) => s + r.count, 0);
+  return {
+    avgTime:
+      summary.reduce((s, r) => s + r.avgTime * r.count, 0) / totalRuns,
+    stdDevTime:
+      summary.reduce((s, r) => s + r.stdDevTime * r.count, 0) / totalRuns,
+    avgCacheHits:
+      summary.reduce((s, r) => s + r.avgCacheHits * r.count, 0) / totalRuns,
+    avgCacheMisses:
+      summary.reduce((s, r) => s + r.avgCacheMisses * r.count, 0) / totalRuns,
+    totalRuns,
+  };
+}
+
 function buildTimeComparison(runs) {
   const byMapAlgo = new Map();
 
   for (const run of runs) {
     const key = `${run.map}|${run.algorithm}`;
     if (!byMapAlgo.has(key)) {
-      byMapAlgo.set(key, {
-        map: run.map,
-        algorithm: run.algorithm,
-        total: 0,
-        count: 0,
-      });
+      byMapAlgo.set(key, { map: run.map, algorithm: run.algorithm, total: 0, count: 0 });
     }
     const entry = byMapAlgo.get(key);
     entry.total += run.executionTimeMs;
@@ -76,9 +108,7 @@ function buildTimeComparison(runs) {
 
   const byMap = new Map();
   for (const entry of byMapAlgo.values()) {
-    if (!byMap.has(entry.map)) {
-      byMap.set(entry.map, { map: mapLabel(entry.map) });
-    }
+    if (!byMap.has(entry.map)) byMap.set(entry.map, { map: mapLabel(entry.map) });
     byMap.get(entry.map)[entry.algorithm] = Number(
       (entry.total / entry.count).toFixed(2)
     );
@@ -93,11 +123,7 @@ function buildCacheHitRate(runs) {
   for (const run of runs) {
     if (run.algorithm !== "cached") continue;
     if (!byMap.has(run.map)) {
-      byMap.set(run.map, {
-        map: mapLabel(run.map),
-        totalHits: 0,
-        totalMisses: 0,
-      });
+      byMap.set(run.map, { map: mapLabel(run.map), totalHits: 0, totalMisses: 0 });
     }
     const entry = byMap.get(run.map);
     entry.totalHits += run.cacheHits ?? 0;
@@ -120,6 +146,8 @@ export default function SessionDetailPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!id) return;
+    setLoading(true);
     getRuns(id)
       .then(setRuns)
       .catch((err) => setError(err.message))
@@ -127,9 +155,11 @@ export default function SessionDetailPage() {
   }, [id]);
 
   const summary = useMemo(() => summarizeByGroup(runs), [runs]);
+  const overall = useMemo(() => computeOverall(summary), [summary]);
   const timeComparison = useMemo(() => buildTimeComparison(runs), [runs]);
   const cacheHitRate = useMemo(() => buildCacheHitRate(runs), [runs]);
 
+  if (!id) return <p style={{ padding: 16 }}>ID de sessão inválido.</p>;
   if (loading) return <p style={{ padding: 16 }}>Carregando runs...</p>;
   if (error)
     return (
@@ -183,13 +213,14 @@ export default function SessionDetailPage() {
       <table style={{ borderCollapse: "collapse", width: "100%" }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>
-            <th style={{ padding: "8px 12px" }}>Mapa</th>
-            <th style={{ padding: "8px 12px" }}>Player</th>
-            <th style={{ padding: "8px 12px" }}>Algoritmo</th>
-            <th style={{ padding: "8px 12px" }}>Execuções</th>
-            <th style={{ padding: "8px 12px" }}>Tempo médio (ms)</th>
-            <th style={{ padding: "8px 12px" }}>Cache hits (média)</th>
-            <th style={{ padding: "8px 12px" }}>Cache miss (média)</th>
+            <th style={cellStyle}>Mapa</th>
+            <th style={cellStyle}>Player</th>
+            <th style={cellStyle}>Algoritmo</th>
+            <th style={cellStyle}>Execuções</th>
+            <th style={cellStyle}>Tempo médio (ms)</th>
+            <th style={cellStyle}>Desvio padrão (ms)</th>
+            <th style={cellStyle}>Cache hits (média)</th>
+            <th style={cellStyle}>Cache miss (média)</th>
           </tr>
         </thead>
         <tbody>
@@ -198,19 +229,29 @@ export default function SessionDetailPage() {
               key={`${row.map}-${row.player}-${row.algorithm}`}
               style={{ borderBottom: "1px solid #eee" }}
             >
-              <td style={{ padding: "8px 12px" }}>{row.map}</td>
-              <td style={{ padding: "8px 12px" }}>{row.player}</td>
-              <td style={{ padding: "8px 12px" }}>{row.algorithm}</td>
-              <td style={{ padding: "8px 12px" }}>{row.count}</td>
-              <td style={{ padding: "8px 12px" }}>{row.avgTime.toFixed(2)}</td>
-              <td style={{ padding: "8px 12px" }}>
-                {row.avgCacheHits.toFixed(1)}
-              </td>
-              <td style={{ padding: "8px 12px" }}>
-                {row.avgCacheMisses.toFixed(1)}
-              </td>
+              <td style={cellStyle}>{row.map}</td>
+              <td style={cellStyle}>{row.player}</td>
+              <td style={cellStyle}>{row.algorithm}</td>
+              <td style={cellStyle}>{row.count}</td>
+              <td style={cellStyle}>{row.avgTime.toFixed(2)}</td>
+              <td style={cellStyle}>{row.stdDevTime.toFixed(2)}</td>
+              <td style={cellStyle}>{row.avgCacheHits.toFixed(1)}</td>
+              <td style={cellStyle}>{row.avgCacheMisses.toFixed(1)}</td>
             </tr>
           ))}
+
+          {overall && (
+            <tr style={totalRowStyle}>
+              <td style={cellStyle} colSpan={3}>
+                Média geral ({overall.totalRuns} runs)
+              </td>
+              <td style={cellStyle}>—</td>
+              <td style={cellStyle}>{overall.avgTime.toFixed(2)}</td>
+              <td style={cellStyle}>{overall.stdDevTime.toFixed(2)}</td>
+              <td style={cellStyle}>{overall.avgCacheHits.toFixed(1)}</td>
+              <td style={cellStyle}>{overall.avgCacheMisses.toFixed(1)}</td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

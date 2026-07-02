@@ -36,6 +36,11 @@ export async function getRuns(sessionId) {
   return await handleResponse(res);
 }
 
+export async function getAllRuns() {
+  const res = await fetch(`${BASE_URL}/runs`);
+  return await handleResponse(res);
+}
+
 export async function saveRun(runData) {
   const res = await fetch(`${BASE_URL}/runs`, {
     method: "POST",

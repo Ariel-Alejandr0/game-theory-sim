@@ -241,17 +241,15 @@ app.post("/runs/bulk", async (req, res) => {
 })
 
 // =====================================
-// GET /runs?sessionId=
-// lista runs de uma sessão de benchmark
+// GET /runs?sessionId=   (sessionId opcional — sem ele retorna todos)
+// lista runs de benchmark
 // =====================================
 app.get("/runs", async (req, res) => {
   try {
-    const sessionId = Number(req.query.sessionId)
-    const runs = await prisma.benchmarkRun.findMany({
-      where: {
-        sessionId
-      }
-    })
+    const where = req.query.sessionId
+      ? { sessionId: Number(req.query.sessionId) }
+      : {}
+    const runs = await prisma.benchmarkRun.findMany({ where })
     res.json(runs)
   } catch (err) {
     console.error(err)

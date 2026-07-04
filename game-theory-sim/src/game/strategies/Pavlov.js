@@ -3,6 +3,7 @@ class Pavlov {
   constructor(){
     this.name = "Pavlov"
     this.lastMove = "C" // começa cooperando
+    this.sprite = { x: 320, y: 0 }    // chapéu marrom caçador
   }
 
   play(opponentHistory){

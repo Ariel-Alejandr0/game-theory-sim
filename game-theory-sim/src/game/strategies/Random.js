@@ -2,6 +2,7 @@ class Random {
 
   constructor(){
     this.name = "Random"
+    this.sprite = { x: 400, y: 0 }    // chapéu de palhaço
   }
 
   play(history){

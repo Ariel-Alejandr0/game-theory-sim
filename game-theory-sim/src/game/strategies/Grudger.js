@@ -2,6 +2,7 @@ class Grudger {
 
   constructor(){
     this.name = "Grudger"
+    this.sprite = { x: 240, y: 0 }    // chapéu amarelo cartola
     this.betrayed = false
   }
 

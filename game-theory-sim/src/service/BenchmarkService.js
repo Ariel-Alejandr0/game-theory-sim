@@ -52,6 +52,15 @@ export async function saveRun(runData) {
   return await handleResponse(res);
 }
 
+export async function runBenchmark(config = {}) {
+  const res = await fetch(`${BASE_URL}/benchmark/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  })
+  return await handleResponse(res)
+}
+
 export async function saveRunsBulk(sessionId, runs) {
   const res = await fetch(`${BASE_URL}/runs/bulk`, {
     method: "POST",

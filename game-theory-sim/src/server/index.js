@@ -1,6 +1,13 @@
 import express from "express"
 import cors from "cors"
+import { fileURLToPath } from "url"
+import path from "path"
+import os from "os"
 import prisma from "./db.js"
+import BenchmarkSuite from "../game/benchmark/BenchmarkSuite.js"
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const BENCHMARK_DIR = path.resolve(__dirname, "../game/benchmark")
 
 const app = express()
 app.use(cors())
@@ -256,6 +263,61 @@ app.get("/runs", async (req, res) => {
     res.status(500).json({
       error: "Erro ao buscar runs de benchmark"
     })
+  }
+})
+
+// =====================================
+// POST /benchmark/run
+// executa a suite de benchmark e salva os resultados
+// =====================================
+app.post("/benchmark/run", async (req, res) => {
+  try {
+    const {
+      players    = ["Copycat"],
+      algorithms = ["basic", "cached"],
+      repetitions = 10,
+      notes      = null,
+    } = req.body
+
+    const maps = [
+      path.join(BENCHMARK_DIR, "board8.txt"),
+      path.join(BENCHMARK_DIR, "board80.txt"),
+      path.join(BENCHMARK_DIR, "board800.txt"),
+    ]
+
+    const suite = new BenchmarkSuite({ maps, players, algorithms, repetitions })
+    const results = await suite.run()
+
+    const session = await prisma.benchmarkSession.create({
+      data: {
+        repetitions,
+        computer: os.hostname(),
+        sourceFile: "UI",
+        notes,
+      }
+    })
+
+    await prisma.benchmarkRun.createMany({
+      data: results.map((run) => ({
+        sessionId: session.id,
+        map: "./" + path.basename(run.map),
+        player: run.player,
+        algorithm: run.algorithm,
+        success: run.success,
+        executionTimeMs: run.executionTimeMs,
+        pathLength: run.pathLength,
+        testedBattles: run.testedBattles,
+        successfulBattles: run.successfulBattles,
+        expandedNodes: run.expandedNodes,
+        cacheHits: run.cacheHits,
+        cacheMisses: run.cacheMisses,
+      }))
+    })
+
+    res.json({ session, count: results.length })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Erro ao executar benchmark" })
   }
 })
 

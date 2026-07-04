@@ -46,7 +46,7 @@ O sistema também inclui um módulo de **benchmark** completo com persistência 
 | Chapéu | Estratégia | Comportamento |
 |--------|-----------|---------------|
 | 🔵 Fez azul | **Copycat** | Imita a última jogada do oponente |
-| 🎩 Coco escuro | **Defector** | Sempre trai |
+| 🎩 Escuro | **Defector** | Sempre trai |
 | 🌸 Aba larga | **Cooperate** | Sempre coopera |
 | 💛 Cartola | **Grudger** | Coopera até ser traído, depois trai para sempre |
 | 🟤 Caçador | **Pavlov** | Repete a jogada se venceu, muda se perdeu |
@@ -96,6 +96,50 @@ Os resultados são salvos em banco de dados SQLite via Prisma e exibidos na tela
 ---
 
 ## 🚀 Como Executar
+
+### Pré-requisitos
+
+- [Node.js 20+](https://nodejs.org)
+- npm
+
+### 1. Clone o repositório
+
+```bash
+git clone https://github.com/Ariel-Alejandr0/game-theory-sim.git
+cd game-theory-sim/game-theory-sim
+```
+
+### 2. Configure o projeto
+
+O script abaixo instala automaticamente todas as dependências do frontend e do backend, além de configurar o banco de dados.
+
+```bash
+chmod +x scripts/setup.sh
+./scripts/setup.sh
+```
+
+### 3. Inicie a aplicação
+
+O script inicia simultaneamente o backend e o frontend.
+
+```bash
+chmod +x scripts/start.sh
+./scripts/start.sh
+```
+
+Após a inicialização, acesse:
+
+- **Frontend:** http://localhost:5173
+- **Backend:** http://localhost:3001
+
+### 4. (Opcional) Execute o benchmark
+
+```bash
+cd src/game/benchmark
+node testeSuite.js
+```
+
+Os resultados ficam disponíveis na aba **Relatórios** da interface.
 
 ### Pré-requisitos
 

@@ -65,15 +65,13 @@ O módulo de benchmark compara os algoritmos **basic** e **cached** do A\* em ma
 
 Os resultados são salvos em banco de dados SQLite via Prisma e exibidos na tela de relatórios.
 
+### Diagrama Entidade-Relacionamento
+
+![DER](docs/DER.png)
+
 ---
 
 ## 🖥️ Screenshots
-
-<!-- 
-  👉 INSTRUÇÕES:
-  - Adicione prints do sistema na pasta docs/
-  - Substitua os comentários abaixo pelas imagens correspondentes
--->
 
 **Tabuleiro principal**
 
@@ -87,11 +85,7 @@ Os resultados são salvos em banco de dados SQLite via Prisma e exibidos na tela
 
 ## 🎬 Vídeo de Demonstração
 
-<!-- 👉 Substitua a URL abaixo pelo link do seu vídeo após publicar -->
-
-[![Assistir demonstração](https://img.shields.io/badge/▶%20Assistir%20vídeo-YouTube-FF0000?style=for-the-badge&logo=youtube)]([Acessar!](https://youtu.be/2HMy7Gd60wo))
-
-> O vídeo inclui o link para este repositório: https://github.com/Ariel-Alejandr0/game-theory-sim
+[![Assistir demonstração](https://img.shields.io/badge/▶%20Assistir%20vídeo-YouTube-FF0000?style=for-the-badge&logo=youtube)](https://youtu.be/2HMy7Gd60wo)
 
 ---
 
@@ -132,7 +126,7 @@ Após a inicialização, acesse:
 - **Frontend:** http://localhost:5173
 - **Backend:** http://localhost:3001
 
-### 4. (Opcional) Execute o benchmark
+### 4. (Opcional) Execute o benchmark via CLI
 
 ```bash
 cd src/game/benchmark
@@ -140,11 +134,6 @@ node testeSuite.js
 ```
 
 Os resultados ficam disponíveis na aba **Relatórios** da interface.
-
-### Pré-requisitos
-
-- [Node.js 20+](https://nodejs.org)
-- npm
 
 ---
 

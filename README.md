@@ -89,7 +89,7 @@ Os resultados são salvos em banco de dados SQLite via Prisma e exibidos na tela
 
 <!-- 👉 Substitua a URL abaixo pelo link do seu vídeo após publicar -->
 
-[![Assistir demonstração](https://img.shields.io/badge/▶%20Assistir%20vídeo-YouTube-FF0000?style=for-the-badge&logo=youtube)](URL_DO_VIDEO_AQUI)
+[![Assistir demonstração](https://img.shields.io/badge/▶%20Assistir%20vídeo-YouTube-FF0000?style=for-the-badge&logo=youtube)]([Acessar!](https://youtu.be/2HMy7Gd60wo))
 
 > O vídeo inclui o link para este repositório: https://github.com/Ariel-Alejandr0/game-theory-sim
 
